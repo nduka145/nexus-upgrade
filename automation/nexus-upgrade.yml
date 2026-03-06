@@ -4,7 +4,7 @@
   vars:
     nexus_user: "nexus"
     nexus_base_dir: "/opt/nexus"
-    download_url: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-linux-x86_64.tar.gz"
+    download_url: "http://192.168.1.180:8081/repository/nexus-packages/nexus-{{ nexus_version }}-linux-x86_64.tar.gz"
     temp_dir: "/tmp/upgrade-nexus"
 
   tasks:
