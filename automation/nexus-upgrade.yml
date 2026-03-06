@@ -1,0 +1,75 @@
+---
+
+- name: Upgrade Nexus Repository
+  hosts: "{{env}}"
+  vars:
+    nexus_user: "nexus"
+    nexus_base_dir: "/opt/nexus"
+    download_url: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-linux-x86_64.tar.gz"
+    temp_dir: "/tmp/upgrade-nexus"
+
+  tasks:
+    - name: Stop Nexus service before upgrade
+      systemd:
+        name: nexus
+        state: stopped
+        enabled: yes
+      become: true
+
+    - name: Create temporary upgrade directory
+      file:
+        path: "{{ temp_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download Nexus package
+      get_url:
+        url: "{{ download_url }}"
+        dest: "{{ temp_dir }}/nexus-{{ nexus_version }}-linux-x86_64.tar.gz"
+        mode: '0644'
+
+    - name: Extract Nexus archive
+      unarchive:
+        src: "{{ temp_dir }}/nexus-{{ nexus_version }}-linux-x86_64.tar.gz"
+        dest: "{{ temp_dir }}"
+        remote_src: yes
+
+    - name: Change ownership to nexus user
+      become: true
+      file:
+        path: "{{ temp_dir }}/nexus-{{ nexus_version }}"
+        owner: "{{ nexus_user }}"
+        group: "{{ nexus_user }}"
+        recurse: yes
+
+    - name: Move extracted Nexus to /opt/nexus
+      become: true
+      command: mv "{{ temp_dir }}/nexus-{{ nexus_version }}" "{{ nexus_base_dir }}/"
+      args:
+        creates: "{{ nexus_base_dir }}/nexus-{{ nexus_version }}"
+
+    - name: Update symbolic link to current Nexus version
+      become: true
+      file:
+        src: "{{ nexus_base_dir }}/nexus-{{ nexus_version }}"
+        dest: "{{ nexus_base_dir }}/current"
+        state: link
+        force: yes
+
+    - name: Reload systemd daemon
+      become: true
+      systemd:
+        daemon_reload: yes
+
+    - name: Start Nexus service
+      become: true
+      systemd:
+        name: nexus
+        state: started
+        enabled: yes
+
+    - name: Remove temporary upgrade directory
+      become: true
+      file:
+        path: "{{ temp_dir }}"
+        state: absent
