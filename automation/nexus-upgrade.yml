@@ -1,5 +1,4 @@
 ---
-
 - name: Upgrade Nexus Repository
   hosts: "{{env}}"
   vars:
