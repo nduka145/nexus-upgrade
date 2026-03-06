@@ -9,13 +9,6 @@
     temp_dir: "/tmp/upgrade-nexus"
 
   tasks:
-    - name: Stop Nexus service before upgrade
-      systemd:
-        name: nexus
-        state: stopped
-        enabled: yes
-      become: true
-
     - name: Create temporary upgrade directory
       file:
         path: "{{ temp_dir }}"
@@ -47,6 +40,13 @@
       command: mv "{{ temp_dir }}/nexus-{{ nexus_version }}" "{{ nexus_base_dir }}/"
       args:
         creates: "{{ nexus_base_dir }}/nexus-{{ nexus_version }}"
+
+    - name: Stop Nexus service before upgrade
+      systemd:
+        name: nexus
+        state: stopped
+        enabled: yes
+      become: true
 
     - name: Update symbolic link to current Nexus version
       become: true
